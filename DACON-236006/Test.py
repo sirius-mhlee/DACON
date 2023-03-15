@@ -9,6 +9,7 @@ from albumentations.pytorch.transforms import ToTensorV2
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 import Config
@@ -29,14 +30,10 @@ def main():
 
     le = pickle.load(open('./Output/encoder.pkl', 'rb'))
 
-    ckpt = torch.load('./Output/{}'.format(Config.test_input_model))
-
     test_img_paths = df['img_path'].values
 
-    # Define Device, Print Model
+    # Define Device
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    print()
-    print(CustomAlexnet(class_num=10))
 
     # Define Transform, Dataset, Dataloader
     test_transform = A.Compose([
@@ -48,27 +45,43 @@ def main():
     test_dataset = CustomDataset(test_img_paths, None, test_transform)
     test_loader = DataLoader(test_dataset, batch_size=Config.batch_size, shuffle=False, num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=True)
 
-    # Define Model, Criterion, Optimizer, Scheduler  
-    model = CustomAlexnet(class_num=10)
-    model.load_state_dict(ckpt['model_state_dict'])
-    model = nn.DataParallel(model)
-    model.to(device)
+    # Define Modellist, Print Modellist
+    model_list = []
+    for idx, test_input_model in enumerate(Config.test_input_model_list):
+        idx += 1
+        
+        ckpt = torch.load('./Output/{}'.format(test_input_model))
 
-    print()
-    print('Epoch: {}, Val Loss: {:.4}, Val Score: {:.4}'.format(ckpt['epoch'], ckpt['loss'], ckpt['score']))
+        print()
+        print('Model: {}, Name: {}'.format(idx, ckpt['name']))
+
+        model = CustomAlexnet(class_num=Config.class_num)
+        print()
+        print(model)
+        print()
+        print('Epoch: {}, Val Loss: {:.4}, Val Score: {:.4}'.format(ckpt['epoch'], ckpt['loss'], ckpt['score']))
+
+        model.load_state_dict(ckpt['model_state_dict'])
+        model = nn.DataParallel(model)
+        model.to(device)
+        model.eval()
+        model_list.append(model)
 
     # Test
     test_pred_list = []
 
     print()
-    model.eval()
-    val_loss = 0.0
     with torch.no_grad():
         for input in tqdm(iter(test_loader)):
             input = input.to(device)
-            
-            output = model(input)
-            _, pred = torch.max(output, 1)
+
+            percent = torch.zeros((input.size(0), Config.class_num))
+            for model in model_list:
+                output = model(input)
+                percent = torch.add(percent, F.softmax(output, dim=1))
+
+            percent = torch.div(percent, len(model_list))
+            _, pred = torch.max(percent, 1)
 
             test_pred_list.extend(pred.detach().cpu().numpy().tolist())
 
