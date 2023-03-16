@@ -22,7 +22,6 @@ import Config
 if Config.fixed_randomness:
     import Util.Randomness as Randomness
 
-from Model.CustomAlexnet import *
 from Model.Loss import CustomCrossEntropyLoss
 
 from Util.CustomDataset import CustomDataset
@@ -70,8 +69,9 @@ def main():
 
         print()
         print('Model: {}, Name: {}'.format(idx, train_model_name))
-        print()
-        print(get_model_by_name(train_model_name))
+        if Config.print_model:
+            print()
+            print(get_model_by_name(train_model_name, False))
         print()
 
         fold_best_loss = []
@@ -100,7 +100,7 @@ def main():
                 val_loader = DataLoader(val_dataset, batch_size=Config.batch_size, shuffle=True, num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=True)
 
             # Define Model, Criterion, Optimizer, Scheduler
-            model = get_model_by_name(train_model_name)
+            model = get_model_by_name(train_model_name, True)
             model = nn.DataParallel(model)
             model.to(device)
 

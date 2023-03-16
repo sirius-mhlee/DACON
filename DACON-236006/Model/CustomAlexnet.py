@@ -3,7 +3,7 @@ import torch.nn as nn
 
 from Model.Layer import CustomLinearLayer
 
-class CustomAlexnet(torch.nn.Module):
+class CustomAlexnet(nn.Module):
     def __init__(self, class_num):
         super().__init__()
 

@@ -17,9 +17,8 @@ import Config
 if Config.fixed_randomness:
     import Util.Randomness as Randomness
 
-from Model.CustomAlexnet import *
-
 from Util.CustomDataset import CustomDataset
+from Util.Mapper import get_model_by_name
 
 def main():
     # Data Load
@@ -52,12 +51,15 @@ def main():
         
         ckpt = torch.load('./Output/{}'.format(test_input_model))
 
-        print()
-        print('Model: {}, Name: {}'.format(idx, ckpt['name']))
+        test_model_name = ckpt['name']
 
-        model = CustomAlexnet(class_num=Config.class_num)
         print()
-        print(model)
+        print('Model: {}, Name: {}'.format(idx, test_model_name))
+
+        model = get_model_by_name(test_model_name, False)
+        if Config.print_model:
+            print()
+            print(model)
         print()
         print('Epoch: {}, Val Loss: {:.4}, Val Score: {:.4}'.format(ckpt['epoch'], ckpt['loss'], ckpt['score']))
 
