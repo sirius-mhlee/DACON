@@ -7,7 +7,7 @@ import pickle
 from tqdm.auto import tqdm
 
 from sklearn import preprocessing
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold, train_test_split
 
 import albumentations as A
 from albumentations.pytorch.transforms import ToTensorV2
@@ -47,10 +47,16 @@ def main():
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
     # Define KFold, Transform
-    if Config.fixed_randomness:
-        skf = StratifiedKFold(n_splits=Config.fold_k, shuffle=True, random_state=Config.seed)
+    if Config.use_fold:
+        if Config.fixed_randomness:
+            skf = StratifiedKFold(n_splits=Config.fold_k, shuffle=True, random_state=Config.seed)
+        else:
+            skf = StratifiedKFold(n_splits=Config.fold_k, shuffle=True)
     else:
-        skf = StratifiedKFold(n_splits=Config.fold_k, shuffle=True)
+        if Config.fixed_randomness:
+            split_train_idx, split_val_idx = train_test_split(np.arange(len(img_paths)), test_size=0.2, shuffle=True, stratify=labels, random_state=Config.seed)
+        else:
+            split_train_idx, split_val_idx = train_test_split(np.arange(len(img_paths)), test_size=0.2, shuffle=True, stratify=labels)
 
     train_transform = A.Compose([
                                 A.Resize(Config.img_size, Config.img_size),
@@ -71,13 +77,19 @@ def main():
         print('Model: {}, Name: {}'.format(idx, train_model_name))
         if Config.print_model:
             print()
-            print(get_model_by_name(train_model_name, False))
+            print(get_model_by_name(train_model_name))
         print()
 
+        fold_best_epoch = []
         fold_best_loss = []
         fold_best_score = []
 
-        for fold, (train_idx, val_idx) in enumerate(skf.split(img_paths, labels)):
+        if Config.use_fold:
+            data_generator = skf.split(img_paths, labels)
+        else:
+            data_generator = [(split_train_idx, split_val_idx)]
+
+        for fold, (train_idx, val_idx) in enumerate(data_generator):
             fold += 1
 
             print('Fold: {}'.format(fold))
@@ -100,7 +112,7 @@ def main():
                 val_loader = DataLoader(val_dataset, batch_size=Config.batch_size, shuffle=True, num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=True)
 
             # Define Model, Criterion, Optimizer, Scheduler
-            model = get_model_by_name(train_model_name, True)
+            model = get_model_by_name(train_model_name)
             model = nn.DataParallel(model)
             model.to(device)
 
@@ -122,6 +134,8 @@ def main():
 
             print()
             for epoch in range(Config.epoch):
+                epoch += 1
+
                 model.train()
                 train_loss = 0.0    
                 for input, label in tqdm(iter(train_loader)):
@@ -179,6 +193,7 @@ def main():
                     best_score = val_score
                     best_model = copy.deepcopy(model.module.state_dict())
 
+            fold_best_epoch.append(best_epoch)
             fold_best_loss.append(best_loss)
             fold_best_score.append(best_score)
 
@@ -189,6 +204,7 @@ def main():
                         'model_state_dict': best_model},
                         './Output/{}_fold_{}_result.pt'.format(train_model_name, fold))
 
+        print('Fold Best Epoch: {}'.format(fold_best_epoch))
         print('Fold Best Loss: {}'.format(fold_best_loss))
         print('Fold Best Score: {}'.format(fold_best_score))
 

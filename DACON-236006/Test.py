@@ -56,7 +56,7 @@ def main():
         print()
         print('Model: {}, Name: {}'.format(idx, test_model_name))
 
-        model = get_model_by_name(test_model_name, False)
+        model = get_model_by_name(test_model_name)
         if Config.print_model:
             print()
             print(model)
@@ -77,7 +77,7 @@ def main():
         for input in tqdm(iter(test_loader)):
             input = input.to(device)
 
-            percent = torch.zeros((input.size(0), Config.class_num))
+            percent = torch.zeros((input.size(0), Config.class_num)).to(device)
             for model in model_list:
                 output = model(input)
                 percent = torch.add(percent, F.softmax(output, dim=1))
