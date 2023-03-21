@@ -42,7 +42,7 @@ def main():
                                 ])
 
     test_dataset = CustomDataset(test_img_paths, None, test_transform)
-    test_loader = DataLoader(test_dataset, batch_size=Config.batch_size, shuffle=False, num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=True)
+    test_loader = DataLoader(test_dataset, batch_size=Config.batch_size, shuffle=False, num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=False)
 
     # Define Modellist, Print Modellist
     model_list = []
@@ -93,7 +93,7 @@ def main():
     if Config.test_run:
         submit = submit.head(Config.test_run_data_size)
 
-    submit['target'] = le.inverse_transform(test_pred_list)
+    submit['artist'] = le.inverse_transform(test_pred_list)
     submit.to_csv('./Output/submit.csv', index=False)
 
 if __name__ == '__main__':

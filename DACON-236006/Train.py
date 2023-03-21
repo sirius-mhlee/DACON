@@ -36,12 +36,12 @@ def main():
         df = df.head(Config.test_run_data_size)
 
     le = preprocessing.LabelEncoder()
-    df['target'] = le.fit_transform(df['target'].values)
+    df['artist'] = le.fit_transform(df['artist'].values)
     pickle.dump(le, open('./Output/encoder.pkl', 'wb'))
 
     df.sort_values(by=['id'])
     img_paths = df['img_path'].values
-    labels = df['target'].values
+    labels = df['artist'].values
 
     # Define Device, Print Model
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -54,9 +54,9 @@ def main():
             skf = StratifiedKFold(n_splits=Config.fold_k, shuffle=True)
     else:
         if Config.fixed_randomness:
-            split_train_idx, split_val_idx = train_test_split(np.arange(len(img_paths)), test_size=0.2, shuffle=True, stratify=labels, random_state=Config.seed)
+            split_train_idx, split_val_idx = train_test_split(np.arange(len(img_paths)), test_size=0.2, shuffle=True, random_state=Config.seed)
         else:
-            split_train_idx, split_val_idx = train_test_split(np.arange(len(img_paths)), test_size=0.2, shuffle=True, stratify=labels)
+            split_train_idx, split_val_idx = train_test_split(np.arange(len(img_paths)), test_size=0.2, shuffle=True)
 
     train_transform = A.Compose([
                                 A.Resize(Config.img_size, Config.img_size),
@@ -105,11 +105,11 @@ def main():
             val_dataset = CustomDataset(val_img_paths, val_labels, val_transform)
 
             if Config.fixed_randomness:
-                train_loader = DataLoader(train_dataset, batch_size=Config.batch_size, shuffle=True, num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=True, worker_init_fn=Randomness.worker_init_fn, generator=Randomness.generator)
-                val_loader = DataLoader(val_dataset, batch_size=Config.batch_size, shuffle=True, num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=True, worker_init_fn=Randomness.worker_init_fn, generator=Randomness.generator)
+                train_loader = DataLoader(train_dataset, batch_size=Config.batch_size, shuffle=True, num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=False, worker_init_fn=Randomness.worker_init_fn, generator=Randomness.generator)
+                val_loader = DataLoader(val_dataset, batch_size=Config.batch_size, shuffle=True, num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=False, worker_init_fn=Randomness.worker_init_fn, generator=Randomness.generator)
             else:
-                train_loader = DataLoader(train_dataset, batch_size=Config.batch_size, shuffle=True, num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=True)
-                val_loader = DataLoader(val_dataset, batch_size=Config.batch_size, shuffle=True, num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=True)
+                train_loader = DataLoader(train_dataset, batch_size=Config.batch_size, shuffle=True, num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=False)
+                val_loader = DataLoader(val_dataset, batch_size=Config.batch_size, shuffle=True, num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=False)
 
             # Define Model, Criterion, Optimizer, Scheduler
             model = get_model_by_name(train_model_name)
