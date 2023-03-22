@@ -3,10 +3,10 @@ class_num = 50
 
 print_model = False
 
-epoch = 10
-batch_size = 64
+epoch = 50
+batch_size = 128
 
-learning_rate = 3e-4
+learning_rate = 5e-4
 
 data_loader_worker_num = 4
 
@@ -16,7 +16,7 @@ fold_k = 2
 fixed_randomness = True
 seed = 2023
 
-test_run = True
+test_run = False
 test_run_data_size = 1000
 
 train_model_name_list = ['efficientnetb0']
