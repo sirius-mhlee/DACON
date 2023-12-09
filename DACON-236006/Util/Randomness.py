@@ -6,8 +6,11 @@ import torch
 import Config
 
 os.environ['PYTHONHASHSEED'] = str(Config.seed)
+
 random.seed(Config.seed)
 np.random.seed(Config.seed)
+rng = np.random.default_rng(Config.seed)
+
 torch.manual_seed(Config.seed)
 torch.cuda.manual_seed(Config.seed)
 torch.cuda.manual_seed_all(Config.seed) # if use multi-GPU

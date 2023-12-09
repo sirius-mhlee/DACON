@@ -3,14 +3,14 @@ class_num = 50
 
 print_model = False
 
-epoch = 50
+epoch = 100
 batch_size = 128
 
-learning_rate = 5e-4
+learning_rate = 1e-2
 
 data_loader_worker_num = 4
 
-use_mixup = False
+use_mixup = True
 
 use_fold = False
 fold_k = 2
