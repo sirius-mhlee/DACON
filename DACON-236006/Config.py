@@ -10,6 +10,8 @@ learning_rate = 5e-4
 
 data_loader_worker_num = 4
 
+use_mixup = False
+
 use_fold = False
 fold_k = 2
 

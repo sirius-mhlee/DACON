@@ -144,9 +144,18 @@ def main():
 
                     optimizer.zero_grad()
                     
-                    output = model(input)
+                    if Config.use_mixup:
+                        lambda_value = np.random.Generator.beta(1.0, 1.0)
+                        mixed_index = torch.randperm(input.size(0)).to(device)
 
-                    loss = criterion(output, label)
+                        mixed_input = lambda_value * input + (1 - lambda_value) * input[mixed_index]
+                        label_a, label_b = label, label[mixed_index]
+
+                        output = model(mixed_input)
+                        loss = lambda_value * criterion(output, label_a) + (1 - lambda_value) * criterion(output, label_b)
+                    else:
+                        output = model(input)
+                        loss = criterion(output, label)
 
                     loss.backward()
                     optimizer.step()
