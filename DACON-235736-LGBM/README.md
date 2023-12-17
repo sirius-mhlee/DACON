@@ -4,3 +4,10 @@
 https://dacon.io/competitions/official/235736/overview/description
 
 ## Requirement
+
+- LightGBM
+- pandas
+
+```shell
+pip install lightgbm pandas
+```
