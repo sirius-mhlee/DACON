@@ -5,9 +5,23 @@ https://dacon.io/competitions/official/235736/overview/description
 
 ## Requirement
 
+- Jupyter Data Science Docker Container
 - LightGBM
-- pandas
 
 ```shell
-pip install lightgbm pandas
+pip install lightgbm
+```
+
+## Train
+
+```
+python Train.py
+```
+
+## Test
+
+> Need `Train` step
+
+```shell
+python Test.py
 ```

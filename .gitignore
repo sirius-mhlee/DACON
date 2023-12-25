@@ -6,3 +6,11 @@
 
 # pycache
 **/__pycache__
+
+# Etc
+**/.ipython
+**/.jupyter
+**/.local
+**/.npm
+**/.cache
+**/.bash_history
