@@ -9,7 +9,7 @@ https://dacon.io/competitions/official/236200/overview/description
 
 ## Train
 
-```
+```shell
 python Train.py
 ```
 

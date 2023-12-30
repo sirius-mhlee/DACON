@@ -14,7 +14,7 @@ pip install lightgbm
 
 ## Train
 
-```
+```shell
 python Train.py
 ```
 

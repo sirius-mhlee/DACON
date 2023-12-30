@@ -17,7 +17,7 @@ pip install pandas tqdm scikit-learn albumentations
 
 ## Train
 
-```
+```shell
 python Train.py
 ```
 
