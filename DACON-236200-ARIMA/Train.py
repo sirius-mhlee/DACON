@@ -29,8 +29,11 @@ def main():
     print()
     print(df.info())
 
+    # Define Train Data
+    train_df = df[['평균기온']]
+
     # Define Train Valid
-    split_train_idx, split_val_idx = train_test_split(np.arange(len(df)), test_size=0.2, shuffle=False)
+    split_train_idx, split_val_idx = train_test_split(np.arange(len(train_df)), test_size=0.2, shuffle=False)
 
     # Train
     fold_score_list = []
@@ -43,19 +46,19 @@ def main():
 
         print('Fold: {}'.format(fold))
 
-        fold_train = df.iloc[train_idx, :]
-        fold_val = df.iloc[val_idx, :]
+        fold_train = train_df.iloc[train_idx, :]
+        fold_val = train_df.iloc[val_idx, :]
 
         print()
 
-        model = smt.ARIMA(fold_train['평균기온'], order=(1, 1, 0), seasonal_order=(0, 0, 0, 0))
+        model = smt.ARIMA(fold_train, order=(1, 1, 0), seasonal_order=(0, 0, 0, 0))
         model_fit = model.fit()
         print(model_fit.summary())
 
         print()
 
         fold_pred = model_fit.predict(start=fold_val.index.min(), end=fold_val.index.max())
-        fold_score = mae(fold_val['평균기온'], fold_pred.values)
+        fold_score = mae(fold_val, fold_pred.values)
 
         fold_score_list.append(fold_score)
 

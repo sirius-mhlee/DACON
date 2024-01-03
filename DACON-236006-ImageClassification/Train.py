@@ -40,8 +40,8 @@ def main():
     pickle.dump(le, open('./Output/encoder.pkl', 'wb'))
 
     df.sort_values(by=['id'])
-    img_paths = df['img_path'].values
-    labels = df['artist'].values
+    train_x = df['img_path'].values
+    train_y = df['artist'].values
 
     # Define Device, Print Model
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -54,9 +54,9 @@ def main():
             skf = StratifiedKFold(n_splits=Config.fold_k, shuffle=True)
     else:
         if Config.fixed_randomness:
-            split_train_idx, split_val_idx = train_test_split(np.arange(len(img_paths)), test_size=0.2, shuffle=True, random_state=Config.seed)
+            split_train_idx, split_val_idx = train_test_split(np.arange(len(train_x)), test_size=0.2, shuffle=True, random_state=Config.seed)
         else:
-            split_train_idx, split_val_idx = train_test_split(np.arange(len(img_paths)), test_size=0.2, shuffle=True)
+            split_train_idx, split_val_idx = train_test_split(np.arange(len(train_x)), test_size=0.2, shuffle=True)
 
     train_transform = A.Compose([
                                 A.Resize(Config.img_size, Config.img_size),
@@ -85,7 +85,7 @@ def main():
         fold_best_score = []
 
         if Config.use_fold:
-            data_generator = skf.split(img_paths, labels)
+            data_generator = skf.split(train_x, train_y)
         else:
             data_generator = [(split_train_idx, split_val_idx)]
 
@@ -95,14 +95,14 @@ def main():
             print('Fold: {}'.format(fold))
 
             # Define Dataset, Dataloader
-            train_img_paths = img_paths[train_idx]
-            train_labels = labels[train_idx]
+            fold_train_x = train_x[train_idx]
+            fold_train_y = train_y[train_idx]
 
-            val_img_paths = img_paths[val_idx]
-            val_labels = labels[val_idx]
+            fold_val_x = train_x[val_idx]
+            fold_val_y = train_y[val_idx]
 
-            train_dataset = CustomDataset(train_img_paths, train_labels, train_transform)
-            val_dataset = CustomDataset(val_img_paths, val_labels, val_transform)
+            train_dataset = CustomDataset(fold_train_x, fold_train_y, train_transform)
+            val_dataset = CustomDataset(fold_val_x, fold_val_y, val_transform)
 
             if Config.fixed_randomness:
                 train_loader = DataLoader(train_dataset, batch_size=Config.batch_size, shuffle=True, num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=False, worker_init_fn=Randomness.worker_init_fn, generator=Randomness.generator)
@@ -130,7 +130,7 @@ def main():
             best_model = copy.deepcopy(model.module.state_dict())
 
             val_pred_list = []
-            val_label_list = []
+            val_target_list = []
 
             print()
             for epoch in range(Config.epoch):
@@ -138,9 +138,9 @@ def main():
 
                 model.train()
                 train_loss = 0.0    
-                for input, label in tqdm(iter(train_loader)):
+                for input, target in tqdm(iter(train_loader)):
                     input = input.to(device)
-                    label = label.to(device).long()
+                    target = target.to(device).long()
 
                     optimizer.zero_grad()
                     
@@ -149,13 +149,13 @@ def main():
                         mixed_index = torch.randperm(input.size(0)).to(device)
 
                         mixed_input = lambda_value * input + (1 - lambda_value) * input[mixed_index]
-                        label_a, label_b = label, label[mixed_index]
+                        target_a, target_b = target, target[mixed_index]
 
                         output = model(mixed_input)
-                        loss = lambda_value * criterion(output, label_a) + (1 - lambda_value) * criterion(output, label_b)
+                        loss = lambda_value * criterion(output, target_a) + (1 - lambda_value) * criterion(output, target_b)
                     else:
                         output = model(input)
-                        loss = criterion(output, label)
+                        loss = criterion(output, target)
 
                     loss.backward()
                     optimizer.step()
@@ -165,19 +165,19 @@ def main():
                 model.eval()
                 val_loss = 0.0
                 with torch.no_grad():
-                    for input, label in tqdm(iter(val_loader)):
+                    for input, target in tqdm(iter(val_loader)):
                         input = input.to(device)
-                        label = label.to(device).long()
+                        target = target.to(device).long()
                         
                         output = model(input)
                         _, pred = torch.max(output, 1)
                         
-                        loss = criterion(output, label)
+                        loss = criterion(output, target)
                         
                         val_loss += loss.item() * input.size(0)
 
                         val_pred_list.extend(pred.detach().cpu().numpy().tolist())
-                        val_label_list.extend(label.detach().cpu().numpy().tolist())
+                        val_target_list.extend(target.detach().cpu().numpy().tolist())
                 
                 epoch_train_loss = train_loss / len(train_loader)
                 epoch_val_loss = val_loss / len(val_loader)
@@ -185,7 +185,7 @@ def main():
                 train_loss_list.append(epoch_train_loss)
                 val_loss_list.append(epoch_val_loss)
 
-                val_score = macro_f1_score(val_label_list, val_pred_list)
+                val_score = macro_f1_score(val_target_list, val_pred_list)
                 
                 if scheduler is not None:
                     epoch_lr = scheduler.get_last_lr()[0]

@@ -29,7 +29,7 @@ def main():
 
     le = pickle.load(open('./Output/encoder.pkl', 'rb'))
 
-    test_img_paths = df['img_path'].values
+    test_x = df['img_path'].values
 
     # Define Device
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -41,8 +41,12 @@ def main():
                                 ToTensorV2()
                                 ])
 
-    test_dataset = CustomDataset(test_img_paths, None, test_transform)
-    test_loader = DataLoader(test_dataset, batch_size=Config.batch_size, shuffle=False, num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=False)
+    test_dataset = CustomDataset(test_x, None, test_transform)
+
+    if Config.fixed_randomness:
+        test_loader = DataLoader(test_dataset, batch_size=Config.batch_size, shuffle=False, num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=False, worker_init_fn=Randomness.worker_init_fn, generator=Randomness.generator)
+    else:
+        test_loader = DataLoader(test_dataset, batch_size=Config.batch_size, shuffle=False, num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=False)
 
     # Define Modellist, Print Modellist
     model_list = []
