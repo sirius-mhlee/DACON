@@ -13,4 +13,5 @@
 **/.local
 **/.npm
 **/.cache
+**/.nv
 **/.bash_history

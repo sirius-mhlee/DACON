@@ -145,7 +145,11 @@ def main():
                     optimizer.zero_grad()
                     
                     if Config.use_mixup:
-                        lambda_value = Randomness.rng.beta(1.0, 1.0)
+                        if Config.fixed_randomness:
+                            lambda_value = Randomness.rng.beta(1.0, 1.0)
+                        else:
+                            lambda_value = np.random.default_rng().beta(1.0, 1.0)
+
                         mixed_index = torch.randperm(input.size(0)).to(device)
 
                         mixed_input = lambda_value * input + (1 - lambda_value) * input[mixed_index]
