@@ -40,7 +40,7 @@ class CustomAlexnet(nn.Module):
             CustomLinearLayer(4096, class_num),
         )
         
-    def forward(self, x):       
+    def forward(self, x):
         x = self.convnet(x)
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
