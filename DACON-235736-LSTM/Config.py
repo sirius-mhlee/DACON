@@ -7,7 +7,7 @@ print_model = False
 epoch = 100
 batch_size = 128
 
-learning_rate = 1e-2
+learning_rate = 1e-1
 
 data_loader_worker_num = 4
 
