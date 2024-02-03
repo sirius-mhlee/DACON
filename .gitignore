@@ -1,17 +1,17 @@
 # Data
-**/Data
+**/Data/
 
 # Output
-**/Output
+**/Output/
 
 # pycache
-**/__pycache__
+**/__pycache__/
 
 # Etc
-**/.ipython
-**/.jupyter
-**/.local
-**/.npm
-**/.cache
-**/.nv
+**/.ipython/
+**/.jupyter/
+**/.local/
+**/.npm/
+**/.cache/
+**/.nv/
 **/.bash_history
