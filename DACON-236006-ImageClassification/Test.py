@@ -64,7 +64,7 @@ def main():
             print()
             print(model)
         print()
-        print(f'Epoch: {ckpt['epoch']}, Val Loss: {ckpt['loss']:.4f}, Val Score: {ckpt['score']:.4f}')
+        print('Epoch: {}, Val Loss: {:.4f}, Val Score: {:.4f}'.format(ckpt['epoch'], ckpt['loss'], ckpt['score']))
 
         model.load_state_dict(ckpt['model_state_dict'])
         model = nn.DataParallel(model)

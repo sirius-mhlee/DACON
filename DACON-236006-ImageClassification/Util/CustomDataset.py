@@ -1,4 +1,4 @@
-import cv2
+from PIL import Image
 
 from torch.utils.data import Dataset
 
@@ -14,8 +14,9 @@ class CustomDataset(Dataset):
     def __getitem__(self, index):
         img_path = self.img_paths[index]
         img_path = './Data/' + img_path
-        image = cv2.imread(img_path)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+        with Image.open(img_path) as img:
+            image = img.convert("RGB")
 
         if self.transform is not None:
             image = self.transform(image)

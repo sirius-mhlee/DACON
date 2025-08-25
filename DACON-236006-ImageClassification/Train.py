@@ -145,9 +145,9 @@ def main():
                         else:
                             lambda_value = rng.beta(1.0, 1.0)
 
-                        mixed_index = torch.randperm(input.size(0)).to(device)
+                        mixed_index = torch.randperm(inputs.size(0)).to(device)
 
-                        mixed_inputs = lambda_value * input + (1 - lambda_value) * input[mixed_index]
+                        mixed_inputs = lambda_value * inputs + (1 - lambda_value) * inputs[mixed_index]
                         target_a, target_b = targets, targets[mixed_index]
 
                         outputs = model(mixed_inputs)
@@ -175,7 +175,7 @@ def main():
                         inputs = inputs.to(device, non_blocking=True)
                         targets = targets.to(device, non_blocking=True).long()
 
-                        outputs = model(input)
+                        outputs = model(inputs)
                         loss = criterion(outputs, targets)
 
                         batch_size = inputs.size(0)
