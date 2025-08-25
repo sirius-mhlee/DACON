@@ -50,22 +50,20 @@ def main():
 
     # Define Modellist, Print Modellist
     model_list = []
-    for idx, test_input_model in enumerate(Config.test_input_model_list):
-        idx += 1
+    for idx, test_input_model in enumerate(Config.test_input_model_list, start=1):
+        ckpt = torch.load(f'./Output/{test_input_model}')
         
-        ckpt = torch.load('./Output/{}'.format(test_input_model))
-
         test_model_name = ckpt['name']
 
         print()
-        print('Model: {}, Name: {}'.format(idx, test_model_name))
+        print(f'Model: {idx}, Name: {test_model_name}')
 
         model = get_model_by_name(test_model_name)
         if Config.print_model:
             print()
             print(model)
         print()
-        print('Epoch: {}, Val Loss: {:.4}, Val Score: {:.4}'.format(ckpt['epoch'], ckpt['loss'], ckpt['score']))
+        print(f'Epoch: {ckpt['epoch']}, Val Loss: {ckpt['loss']:.4f}, Val Score: {ckpt['score']:.4f}')
 
         model.load_state_dict(ckpt['model_state_dict'])
         model = nn.DataParallel(model)
@@ -77,19 +75,20 @@ def main():
     test_pred_list = []
 
     print()
-    with torch.no_grad():
-        for input in tqdm(iter(test_loader)):
-            input = input.to(device)
+    with torch.inference_mode():
+        for inputs in tqdm(test_loader):
+            inputs = inputs.to(device, non_blocking=True)
 
-            percent = torch.zeros((input.size(0), Config.class_num)).to(device)
+            logits_sum = torch.zeros((inputs.size(0), Config.class_num)).to(device)
             for model in model_list:
-                output = model(input)
-                percent = torch.add(percent, F.softmax(output, dim=1))
+                outputs = model(inputs)
+                logits_sum = torch.add(logits_sum, outputs)
 
-            percent = torch.div(percent, len(model_list))
-            _, pred = torch.max(percent, 1)
+            logits_avg = torch.div(logits_sum, len(model_list))
+            probs = F.softmax(logits_avg, dim=1)
+            _, preds = torch.max(probs, 1)
 
-            test_pred_list.extend(pred.detach().cpu().numpy().tolist())
+            test_pred_list.extend(preds.detach().cpu().tolist())
 
     print()
 

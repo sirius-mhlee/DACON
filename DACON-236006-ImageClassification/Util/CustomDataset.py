@@ -5,7 +5,7 @@ from torch.utils.data import Dataset
 class CustomDataset(Dataset):
     def __init__(self, img_paths, labels, transform=None):
         super().__init__()
-        
+
         self.img_paths = img_paths
         self.labels = labels
 
@@ -16,7 +16,7 @@ class CustomDataset(Dataset):
         img_path = './Data/' + img_path
         image = cv2.imread(img_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        
+
         if self.transform is not None:
             image = self.transform(image=image)['image']
 
