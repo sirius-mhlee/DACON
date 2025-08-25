@@ -9,10 +9,9 @@ https://dacon.io/competitions/official/236006/overview/description
 - pandas
 - tqdm
 - scikit-learn
-- Albumentations
 
 ```shell
-pip install pandas tqdm scikit-learn albumentations
+pip install pandas tqdm scikit-learn
 ```
 
 ## Train

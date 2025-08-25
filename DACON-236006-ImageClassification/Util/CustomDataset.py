@@ -18,7 +18,7 @@ class CustomDataset(Dataset):
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         if self.transform is not None:
-            image = self.transform(image=image)['image']
+            image = self.transform(image)
 
         if self.labels is not None:
             label = self.labels[index]

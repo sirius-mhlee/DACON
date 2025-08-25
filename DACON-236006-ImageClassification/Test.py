@@ -4,13 +4,13 @@ import pickle
 
 from tqdm.auto import tqdm
 
-import albumentations as A
-from albumentations.pytorch.transforms import ToTensorV2
+
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
+from torchvision.transforms import v2
 
 import Config
 
@@ -35,10 +35,11 @@ def main():
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
     # Define Transform, Dataset, Dataloader
-    test_transform = A.Compose([
-                                A.Resize(Config.img_size, Config.img_size),
-                                A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225), max_pixel_value=255.0, always_apply=False, p=1.0),
-                                ToTensorV2()
+    test_transform = v2.Compose([
+                                v2.Resize((Config.img_size, Config.img_size), interpolation=v2.InterpolationMode.BICUBIC, antialias=True),
+                                v2.ToImage(),
+                                v2.ToDtype(torch.float32, scale=True),
+                                v2.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
                                 ])
 
     test_dataset = CustomDataset(test_x, None, test_transform)
@@ -52,7 +53,7 @@ def main():
     model_list = []
     for idx, test_input_model in enumerate(Config.test_input_model_list, start=1):
         ckpt = torch.load(f'./Output/{test_input_model}')
-        
+
         test_model_name = ckpt['name']
 
         print()

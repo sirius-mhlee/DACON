@@ -9,13 +9,11 @@ from tqdm.auto import tqdm
 from sklearn import preprocessing
 from sklearn.model_selection import StratifiedKFold, train_test_split
 
-import albumentations as A
-from albumentations.pytorch.transforms import ToTensorV2
-
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
+from torchvision.transforms import v2
 
 import Config
 
@@ -58,16 +56,18 @@ def main():
         else:
             split_train_idx, split_val_idx = train_test_split(np.arange(len(train_x)), test_size=0.2, shuffle=True)
 
-    train_transform = A.Compose([
-                                A.Resize(Config.img_size, Config.img_size),
-                                A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225), max_pixel_value=255.0, always_apply=False, p=1.0),
-                                ToTensorV2()
+    train_transform = v2.Compose([
+                                v2.Resize((Config.img_size, Config.img_size), interpolation=v2.InterpolationMode.BICUBIC, antialias=True),
+                                v2.ToImage(),
+                                v2.ToDtype(torch.float32, scale=True),
+                                v2.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
                                 ])
 
-    val_transform = A.Compose([
-                                A.Resize(Config.img_size, Config.img_size),
-                                A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225), max_pixel_value=255.0, always_apply=False, p=1.0),
-                                ToTensorV2()
+    val_transform = v2.Compose([
+                                v2.Resize((Config.img_size, Config.img_size), interpolation=v2.InterpolationMode.BICUBIC, antialias=True),
+                                v2.ToImage(),
+                                v2.ToDtype(torch.float32, scale=True),
+                                v2.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
                                 ])
 
     for idx, train_model_name in enumerate(Config.train_model_name_list, start=1):
