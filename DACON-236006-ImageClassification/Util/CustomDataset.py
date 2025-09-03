@@ -1,23 +1,20 @@
-from PIL import Image
-
 from torch.utils.data import Dataset
+from torchvision.io import read_image, ImageReadMode
 
 class CustomDataset(Dataset):
-    def __init__(self, img_paths, labels, transform=None):
+    def __init__(self, image_paths, labels, transform=None):
         super().__init__()
 
-        self.img_paths = img_paths
+        self.image_paths = image_paths
         self.labels = labels
 
         self.transform = transform
 
     def __getitem__(self, index):
-        img_path = self.img_paths[index]
-        img_path = './Data/' + img_path
+        image_path = self.image_paths[index]
+        image_path = './Data/' + image_path
 
-        with Image.open(img_path) as img:
-            image = img.convert("RGB")
-
+        image = read_image(image_path, mode=ImageReadMode.RGB)
         if self.transform is not None:
             image = self.transform(image)
 
@@ -28,4 +25,4 @@ class CustomDataset(Dataset):
             return image
 
     def __len__(self):
-        return len(self.img_paths)
+        return len(self.image_paths)

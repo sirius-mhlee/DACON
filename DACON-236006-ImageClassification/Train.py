@@ -101,11 +101,17 @@ def main():
             val_dataset = CustomDataset(fold_val_x, fold_val_y, val_transform)
 
             if Config.fixed_randomness:
-                train_loader = DataLoader(train_dataset, batch_size=Config.batch_size, shuffle=True, num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=False, worker_init_fn=Randomness.worker_init_fn, generator=Randomness.generator)
-                val_loader = DataLoader(val_dataset, batch_size=Config.batch_size, shuffle=False, num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=False, worker_init_fn=Randomness.worker_init_fn, generator=Randomness.generator)
+                train_loader = DataLoader(train_dataset, batch_size=Config.batch_size, shuffle=True,
+                                          num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=False,
+                                          worker_init_fn=Randomness.worker_init_fn, generator=Randomness.generator)
+                val_loader = DataLoader(val_dataset, batch_size=Config.batch_size, shuffle=False,
+                                        num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=False,
+                                        worker_init_fn=Randomness.worker_init_fn, generator=Randomness.generator)
             else:
-                train_loader = DataLoader(train_dataset, batch_size=Config.batch_size, shuffle=True, num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=False)
-                val_loader = DataLoader(val_dataset, batch_size=Config.batch_size, shuffle=False, num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=False)
+                train_loader = DataLoader(train_dataset, batch_size=Config.batch_size, shuffle=True,
+                                          num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=False)
+                val_loader = DataLoader(val_dataset, batch_size=Config.batch_size, shuffle=False,
+                                        num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=False)
 
             # Define Model, Criterion, Optimizer, Scheduler
             model = get_model_by_name(train_model_name)
@@ -125,8 +131,6 @@ def main():
             best_score = 0.0
             best_model = copy.deepcopy(getattr(model, 'module', model).state_dict())
 
-            rng = np.random.default_rng()
-
             print()
             for epoch in range(1, Config.epoch + 1):
                 model.train()
@@ -138,20 +142,19 @@ def main():
                     targets = targets.to(device, non_blocking=True).long()
 
                     optimizer.zero_grad(set_to_none=True)
+                    batch_size = inputs.size(0)
 
                     if Config.use_mixup:
-                        if Config.fixed_randomness:
-                            lambda_value = Randomness.rng.beta(1.0, 1.0)
-                        else:
-                            lambda_value = rng.beta(1.0, 1.0)
-
+                        lambda_value = torch.distributions.Beta(0.2, 0.2).sample((batch_size, 1, 1, 1)).to(device, non_blocking=True)
                         mixed_index = torch.randperm(inputs.size(0)).to(device, non_blocking=True)
 
                         mixed_inputs = lambda_value * inputs + (1 - lambda_value) * inputs[mixed_index]
                         target_a, target_b = targets, targets[mixed_index]
 
                         outputs = model(mixed_inputs)
-                        loss = lambda_value * criterion(outputs, target_a) + (1 - lambda_value) * criterion(outputs, target_b)
+                        loss_a = criterion(outputs, target_a, reduction='none')
+                        loss_b = criterion(outputs, target_b, reduction='none')
+                        loss = (lambda_value * loss_a + (1 - lambda_value) * loss_b).mean()
                     else:
                         outputs = model(inputs)
                         loss = criterion(outputs, targets)
@@ -159,7 +162,6 @@ def main():
                     loss.backward()
                     optimizer.step()
 
-                    batch_size = inputs.size(0)
                     train_loss_sum += loss.detach().item() * batch_size
                     train_seen += batch_size
 
@@ -175,10 +177,11 @@ def main():
                         inputs = inputs.to(device, non_blocking=True)
                         targets = targets.to(device, non_blocking=True).long()
 
+                        batch_size = inputs.size(0)
+
                         outputs = model(inputs)
                         loss = criterion(outputs, targets)
 
-                        batch_size = inputs.size(0)
                         val_loss_sum += loss.detach().item() * batch_size
                         val_seen += batch_size
 
@@ -204,7 +207,11 @@ def main():
                 else:
                     epoch_lr = Config.learning_rate
 
-                print(f'Epoch: {epoch}, Learning Rate: {epoch_lr:.6f}, Train Loss: {epoch_train_loss:.4f}, Val Loss: {epoch_val_loss:.4f}, Val Score: {val_score:.4f}')
+                print(f'Epoch: {epoch}, \
+                        Learning Rate: {epoch_lr:.6f}, \
+                        Train Loss: {epoch_train_loss:.4f}, \
+                        Val Loss: {epoch_val_loss:.4f}, \
+                        Val Score: {val_score:.4f}')
                 print()
 
                 if epoch_val_loss < best_loss:

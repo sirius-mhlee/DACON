@@ -43,9 +43,12 @@ def main():
     test_dataset = CustomDataset(test_x, None, test_transform)
 
     if Config.fixed_randomness:
-        test_loader = DataLoader(test_dataset, batch_size=Config.batch_size, shuffle=False, num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=False, worker_init_fn=Randomness.worker_init_fn, generator=Randomness.generator)
+        test_loader = DataLoader(test_dataset, batch_size=Config.batch_size, shuffle=False,
+                                 num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=False,
+                                 worker_init_fn=Randomness.worker_init_fn, generator=Randomness.generator)
     else:
-        test_loader = DataLoader(test_dataset, batch_size=Config.batch_size, shuffle=False, num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=False)
+        test_loader = DataLoader(test_dataset, batch_size=Config.batch_size, shuffle=False,
+                                 num_workers=Config.data_loader_worker_num, pin_memory=True, drop_last=False)
 
     # Define Modellist, Print Modellist
     model_list = []
@@ -62,7 +65,9 @@ def main():
             print()
             print(model)
         print()
-        print('Epoch: {}, Val Loss: {:.4f}, Val Score: {:.4f}'.format(ckpt['epoch'], ckpt['loss'], ckpt['score']))
+        print('Epoch: {}, \
+               Val Loss: {:.4f}, \
+               Val Score: {:.4f}'.format(ckpt['epoch'], ckpt['loss'], ckpt['score']))
 
         model.load_state_dict(ckpt['model_state_dict'])
         model = nn.DataParallel(model)
