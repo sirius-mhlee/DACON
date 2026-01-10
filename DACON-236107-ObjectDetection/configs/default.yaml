@@ -1,0 +1,19 @@
+# Common
+device: ""
+project: runs
+name: exp
+
+# Training
+model: yolov8n.pt
+data_yaml: datasets/data.yaml
+epochs: 100
+imgsz: 640
+batch: 16
+seed: 2023
+
+# Inference
+source: datasets/images
+conf: 0.25
+iou: 0.7
+save_txt: false
+save_conf: false
