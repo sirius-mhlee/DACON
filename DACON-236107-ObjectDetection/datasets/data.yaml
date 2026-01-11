@@ -1,5 +1,39 @@
 path: datasets
 train: images/train
-val: images/val
+val: images/train
+nc: 34
 names:
-  0: class0
+  0: chevrolet_malibu_sedan_2012_2016
+  1: chevrolet_malibu_sedan_2017_2019
+  2: chevrolet_spark_hatchback_2016_2021
+  3: chevrolet_trailblazer_suv_2021_
+  4: chevrolet_trax_suv_2017_2019
+  5: genesis_g80_sedan_2016_2020
+  6: genesis_g80_sedan_2021_
+  7: genesis_gv80_suv_2020_
+  8: hyundai_avante_sedan_2011_2015
+  9: hyundai_avante_sedan_2020_
+  10: hyundai_grandeur_sedan_2011_2016
+  11: hyundai_grandstarex_van_2018_2020
+  12: hyundai_ioniq_hatchback_2016_2019
+  13: hyundai_sonata_sedan_2004_2009
+  14: hyundai_sonata_sedan_2010_2014
+  15: hyundai_sonata_sedan_2019_2020
+  16: kia_carnival_van_2015_2020
+  17: kia_carnival_van_2021_
+  18: kia_k5_sedan_2010_2015
+  19: kia_k5_sedan_2020_
+  20: kia_k7_sedan_2016_2020
+  21: kia_mohave_suv_2020_
+  22: kia_morning_hatchback_2004_2010
+  23: kia_morning_hatchback_2011_2016
+  24: kia_ray_hatchback_2012_2017
+  25: kia_sorrento_suv_2015_2019
+  26: kia_sorrento_suv_2020_
+  27: kia_soul_suv_2014_2018
+  28: kia_sportage_suv_2016_2020
+  29: kia_stonic_suv_2017_2019
+  30: renault_sm3_sedan_2015_2018
+  31: renault_xm3_suv_2020_
+  32: ssangyong_korando_suv_2019_2020
+  33: ssangyong_tivoli_suv_2016_2020

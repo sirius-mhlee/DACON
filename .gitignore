@@ -1,5 +1,7 @@
 # Data
 **/Data/
+**/datasets/
+!**/datasets/*yaml
 
 # Output
 **/Output/

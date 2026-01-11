@@ -6,11 +6,10 @@ https://dacon.io/competitions/official/236107/overview/description
 ## Requirement
 
 - PyTorch Docker Container
-- pandas
-- scikit-learn
+- tqdm
 
 ```shell
-pip install pandas scikit-learn
+pip install tqdm
 ```
 
 ## Train

@@ -29,6 +29,11 @@ class Config:
     save_conf: bool = False
 
 
+def _filter_keys(data: Dict[str, Any], schema: Type[Config]) -> Dict[str, Any]:
+    allowed = {field.name for field in schema.__dataclass_fields__.values()}
+    return {key: value for key, value in data.items() if key in allowed}
+
+
 def load_config(path: str) -> Config:
     config_path = Path(path)
     if not config_path.exists():
@@ -38,8 +43,3 @@ def load_config(path: str) -> Config:
         data = yaml.safe_load(handle) or {}
 
     return Config(**_filter_keys(data, Config))
-
-
-def _filter_keys(data: Dict[str, Any], schema: Type[Config]) -> Dict[str, Any]:
-    allowed = {field.name for field in schema.__dataclass_fields__.values()}
-    return {key: value for key, value in data.items() if key in allowed}
