@@ -1,18 +1,23 @@
 # Common
-device: ""
-project: runs
-name: exp
+device: 0
 
 # Training
-model: yolov8n.pt
+train_model: models/yolov8n.pt
+train_project: runs/train
+train_name: exp
 data_yaml: datasets/data.yaml
-epochs: 100
+epochs: 1
 imgsz: 640
 batch: 16
 seed: 2023
 
-# Inference
-source: datasets/images
+# Prediction
+predict_model: runs/train/exp/weights/best.pt
+predict_project: runs/predict
+predict_name: exp
+data_folder: datasets/images/test
+sample_csv: datasets/sample_submission.csv
+output_csv: submit.csv
 conf: 0.25
 iou: 0.7
 save_txt: false

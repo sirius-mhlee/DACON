@@ -1,17 +1,17 @@
 from ultralytics import YOLO
 
-from .config import Config
+from .config import Config, ROOT_DIR
 
 
 def train(cfg: Config) -> None:
-    model = YOLO(cfg.model)
+    model = YOLO(cfg.train_model)
     model.train(
         data=cfg.data_yaml,
         epochs=cfg.epochs,
         imgsz=cfg.imgsz,
         batch=cfg.batch,
         device=cfg.device,
-        project=cfg.project,
-        name=cfg.name,
+        project=ROOT_DIR / cfg.train_project,
+        name=cfg.train_name,
         seed=cfg.seed,
     )

@@ -1,28 +1,32 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Type
 
 import yaml
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
-RUNS_DIR = ROOT_DIR / "runs"
 
 
 @dataclass
 class Config:
-    device: str = ""
-    project: str = "runs"
-    name: str = "exp"
+    device: int = 0
 
+    train_model: str = "models/yolov8n.pt"
+    train_project: str = "runs/train"
+    train_name: str = "exp"
     data_yaml: str = "datasets/data.yaml"
-    model: str = "yolov8n.pt"
     epochs: int = 100
     imgsz: int = 640
     batch: int = 16
     seed: int = 2023
 
-    source: str = "datasets/images"
+    predict_model: str = "runs/exp/weights/best.pt"
+    predict_project: str = "runs/predict"
+    predict_name: str = "exp"
+    data_folder: str = "datasets/images/test"
+    sample_csv: str = "datasets/sample_submission.csv"
+    output_csv: str = "submit.csv"
     conf: float = 0.25
     iou: float = 0.7
     save_txt: bool = False

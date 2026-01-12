@@ -5,11 +5,15 @@ https://dacon.io/competitions/official/236107/overview/description
 
 ## Requirement
 
-- PyTorch Docker Container
-- tqdm
+- Ultralytics Docker Container
+- pandas
 
 ```shell
-pip install tqdm
+docker run --name yolo --ipc=host --runtime=nvidia --gpus all -i -t -v ./:/workspace -w /workspace ultralytics/ultralytics
+```
+
+```shell
+pip install pandas
 ```
 
 ## Train
