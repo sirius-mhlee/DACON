@@ -11,6 +11,7 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 @dataclass
 class Config:
     device: int = 0
+    seed: int = 2023
 
     train_model: str = "models/yolov8n.pt"
     train_project: str = "runs/train"
@@ -19,7 +20,6 @@ class Config:
     epochs: int = 100
     imgsz: int = 640
     batch: int = 16
-    seed: int = 2023
 
     predict_model: str = "runs/exp/weights/best.pt"
     predict_project: str = "runs/predict"

@@ -1,7 +1,8 @@
 # Data
 **/Data/
-**/datasets/
-!**/datasets/*.yaml
+**/datasets/images/
+**/datasets/labels/
+**/datasets/sample_submission.csv
 
 # Model
 **/models/

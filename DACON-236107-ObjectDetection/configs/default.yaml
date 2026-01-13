@@ -1,15 +1,15 @@
 # Common
 device: 0
+seed: 2023
 
 # Training
 train_model: models/yolov8n.pt
 train_project: runs/train
 train_name: exp
-data_yaml: datasets/data.yaml
+data_yaml: datasets/full_data.yaml
 epochs: 1
 imgsz: 640
 batch: 16
-seed: 2023
 
 # Prediction
 predict_model: runs/train/exp/weights/best.pt
