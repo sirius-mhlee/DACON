@@ -16,6 +16,13 @@ docker run --name yolo --ipc=host --runtime=nvidia --gpus all -i -t -v ./:/works
 pip install pandas
 ```
 
+## Prepare Data
+
+```shell
+python scripts/prepare_yolo_labels.py
+python scripts/split_train_val_symlink.py
+```
+
 ## Train
 
 ```shell

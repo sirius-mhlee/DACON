@@ -2,12 +2,17 @@ import argparse
 import os
 import random
 import shutil
+import sys
 from concurrent.futures import ThreadPoolExecutor
 from itertools import repeat
 from pathlib import Path
 from typing import List, Optional, Tuple
 
 from tqdm.auto import tqdm
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 from src.config import load_config
 
@@ -33,28 +38,51 @@ def _collect_images(images_dir: Path) -> List[Path]:
     return sorted([path for path in images_dir.rglob("*.png")])
 
 
-def _safe_symlink(src: Path, dst: Path) -> None:
-    dst.parent.mkdir(parents=True, exist_ok=True)
-    if dst.exists() or dst.is_symlink():
-        if dst.is_dir():
-            raise IsADirectoryError(f"Refuse to overwrite directory: {dst}")
-        dst.unlink()
-    os.symlink(src.resolve(), dst)
-
-
 def _clear_dir(path: Path) -> None:
     if path.exists():
         shutil.rmtree(path)
 
 
-Pair = Tuple[Path, Path, Path]
+def _make_pair(images_dir: Path, labels_dir: Path, image_path: Path) -> Optional[Tuple[Path, Path, Path]]:
+    rel = image_path.relative_to(images_dir)
+    label_path = labels_dir / rel.with_suffix(".txt")
+    if not label_path.exists():
+        return None
+    return (image_path, label_path, rel)
+
+
+def _make_pairs(
+    images_dir: Path,
+    labels_dir: Path,
+    image_paths: List[Path],
+    workers: int,
+) -> Tuple[List[Tuple[Path, Path, Path]], int]:
+    missing_labels = 0
+    paired: List[Tuple[Path, Path, Path]] = []
+    if workers <= 1:
+        for image_path in tqdm(image_paths, total=len(image_paths), desc="Preparing", unit="file"):
+            pair = _make_pair(images_dir, labels_dir, image_path)
+            if pair is None:
+                missing_labels += 1
+            else:
+                paired.append(pair)
+        return paired, missing_labels
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        results = executor.map(_make_pair, repeat(images_dir), repeat(labels_dir), image_paths)
+        for pair in tqdm(results, total=len(image_paths), desc="Preparing", unit="file"):
+            if pair is None:
+                missing_labels += 1
+            else:
+                paired.append(pair)
+    return paired, missing_labels
 
 
 def _split_items(
-    items: List[Pair],
+    items: List[Tuple[Path, Path, Path]],
     val_ratio: float,
     seed: int,
-) -> Tuple[List[Pair], List[Pair]]:
+) -> Tuple[List[Tuple[Path, Path, Path]], List[Tuple[Path, Path, Path]]]:
     rng = random.Random(seed)
     rng.shuffle(items)
     val_count = int(len(items) * val_ratio)
@@ -65,52 +93,26 @@ def _split_items(
     return train_items, val_items
 
 
-def _pair_image(images_dir: Path, labels_dir: Path, image_path: Path) -> Optional[Pair]:
-    rel = image_path.relative_to(images_dir)
-    label_path = labels_dir / rel.with_suffix(".txt")
-    if not label_path.exists():
-        return None
-    return (image_path, label_path, rel)
+def _make_symlink(src: Path, dst: Path) -> None:
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    if dst.exists() or dst.is_symlink():
+        if dst.is_dir():
+            raise IsADirectoryError(f"Refuse to overwrite directory: {dst}")
+        dst.unlink()
+    os.symlink(src.resolve(), dst)
 
 
-def _build_pairs(
-    images_dir: Path,
-    labels_dir: Path,
-    image_paths: List[Path],
-    workers: int,
-) -> Tuple[List[Pair], int]:
-    missing_labels = 0
-    paired: List[Pair] = []
-    if workers <= 1:
-        for image_path in tqdm(image_paths, total=len(image_paths), desc="Preparing", unit="file"):
-            pair = _pair_image(images_dir, labels_dir, image_path)
-            if pair is None:
-                missing_labels += 1
-            else:
-                paired.append(pair)
-        return paired, missing_labels
-
-    with ThreadPoolExecutor(max_workers=workers) as executor:
-        results = executor.map(_pair_image, repeat(images_dir), repeat(labels_dir), image_paths)
-        for pair in tqdm(results, total=len(image_paths), desc="Preparing", unit="file"):
-            if pair is None:
-                missing_labels += 1
-            else:
-                paired.append(pair)
-    return paired, missing_labels
-
-
-def _symlink_many(tasks: List[Tuple[Path, Path]], workers: int, desc: str) -> None:
+def _make_symlinks(tasks: List[Tuple[Path, Path]], workers: int, desc: str) -> None:
     if not tasks:
         return
 
     if workers <= 1:
         for src, dst in tqdm(tasks, total=len(tasks), desc=desc, unit="link"):
-            _safe_symlink(src, dst)
+            _make_symlink(src, dst)
         return
 
     with ThreadPoolExecutor(max_workers=workers) as executor:
-        results = executor.map(_safe_symlink, [t[0] for t in tasks], [t[1] for t in tasks])
+        results = executor.map(_make_symlink, [t[0] for t in tasks], [t[1] for t in tasks])
         for _ in tqdm(results, total=len(tasks), desc=desc, unit="link"):
             pass
 
@@ -130,7 +132,7 @@ def split_train_val(
     if not image_paths:
         raise FileNotFoundError(f"No images found in {images_dir}")
 
-    paired, missing_labels = _build_pairs(images_dir, labels_dir, image_paths, workers)
+    paired, missing_labels = _make_pairs(images_dir, labels_dir, image_paths, workers)
 
     if not paired:
         raise FileNotFoundError(f"No matching labels found in {labels_dir}")
@@ -158,8 +160,8 @@ def split_train_val(
         val_tasks.append((image_path, val_images_dir / rel))
         val_tasks.append((label_path, val_labels_dir / rel.with_suffix(".txt")))
 
-    _symlink_many(train_tasks, workers, "Symlinking (train)")
-    _symlink_many(val_tasks, workers, "Symlinking (val)")
+    _make_symlinks(train_tasks, workers, "Symlinking (train)")
+    _make_symlinks(val_tasks, workers, "Symlinking (val)")
 
     print(f"train: {len(train_pairs)} files")
     print(f"val: {len(val_pairs)} files")
