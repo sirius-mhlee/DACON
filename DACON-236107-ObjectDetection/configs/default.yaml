@@ -8,7 +8,7 @@ train_project: runs/train
 train_name: exp
 data_yaml: datasets/train_val_data.yaml
 epochs: 100
-imgsz: 640
+imgsz: 1024
 batch: 16
 
 # Prediction
