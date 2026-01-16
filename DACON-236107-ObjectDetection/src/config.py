@@ -31,6 +31,7 @@ class Config:
     iou: float = 0.7
     save_txt: bool = False
     save_conf: bool = False
+    save_result: bool = False
 
 
 def _filter_keys(data: Dict[str, Any], schema: Type[Config]) -> Dict[str, Any]:

@@ -22,3 +22,4 @@ conf: 0.25
 iou: 0.7
 save_txt: false
 save_conf: false
+save_result: false

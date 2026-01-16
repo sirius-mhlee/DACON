@@ -6,7 +6,7 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 from itertools import repeat
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from tqdm.auto import tqdm
 
@@ -15,6 +15,9 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from src.config import load_config
+
+
+LabeledPair = Tuple[Path, Path, Path, Tuple[int, ...]]
 
 
 def parse_args() -> argparse.Namespace:
@@ -43,12 +46,28 @@ def _clear_dir(path: Path) -> None:
         shutil.rmtree(path)
 
 
-def _make_pair(images_dir: Path, labels_dir: Path, image_path: Path) -> Optional[Tuple[Path, Path, Path]]:
+def _read_labels(label_path: Path) -> Tuple[int, ...]:
+    labels = set()
+    for raw in label_path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        parts = line.split()
+        try:
+            cls_id = int(float(parts[0]))
+        except (IndexError, ValueError) as exc:
+            raise ValueError(f"Invalid label line in {label_path}: {line}") from exc
+        labels.add(cls_id)
+    return tuple(sorted(labels))
+
+
+def _make_pair(images_dir: Path, labels_dir: Path, image_path: Path) -> Optional[LabeledPair]:
     rel = image_path.relative_to(images_dir)
     label_path = labels_dir / rel.with_suffix(".txt")
     if not label_path.exists():
         return None
-    return (image_path, label_path, rel)
+    labels = _read_labels(label_path)
+    return (image_path, label_path, rel, labels)
 
 
 def _make_pairs(
@@ -56,9 +75,9 @@ def _make_pairs(
     labels_dir: Path,
     image_paths: List[Path],
     workers: int,
-) -> Tuple[List[Tuple[Path, Path, Path]], int]:
+) -> Tuple[List[LabeledPair], int]:
     missing_labels = 0
-    paired: List[Tuple[Path, Path, Path]] = []
+    paired: List[LabeledPair] = []
     if workers <= 1:
         for image_path in tqdm(image_paths, total=len(image_paths), desc="Preparing", unit="file"):
             pair = _make_pair(images_dir, labels_dir, image_path)
@@ -79,17 +98,77 @@ def _make_pairs(
 
 
 def _split_items(
-    items: List[Tuple[Path, Path, Path]],
+    items: List[LabeledPair],
     val_ratio: float,
     seed: int,
-) -> Tuple[List[Tuple[Path, Path, Path]], List[Tuple[Path, Path, Path]]]:
+) -> Tuple[List[LabeledPair], List[LabeledPair]]:
+    if val_ratio <= 0:
+        return items, []
+
     rng = random.Random(seed)
-    rng.shuffle(items)
-    val_count = int(len(items) * val_ratio)
-    if val_ratio > 0 and val_count == 0:
+    total = len(items)
+    val_count = int(round(total * val_ratio))
+    if val_count <= 0:
         val_count = 1
-    val_items = items[:val_count]
-    train_items = items[val_count:]
+    if val_count > total:
+        val_count = total
+
+    labels_per_item = [set(pair[3]) for pair in items]
+    label_counts: Dict[int, int] = {}
+    for labels in labels_per_item:
+        for label in labels:
+            label_counts[label] = label_counts.get(label, 0) + 1
+
+    if not label_counts:
+        indices = list(range(total))
+        rng.shuffle(indices)
+        val_indices = indices[:val_count]
+        train_indices = indices[val_count:]
+        train_items = [items[i] for i in train_indices]
+        val_items = [items[i] for i in val_indices]
+        return train_items, val_items
+
+    desired = {label: count * val_ratio for label, count in label_counts.items()}
+    remaining = dict(desired)
+
+    val_indices = set()
+    available = set(range(total))
+
+    def score(idx: int) -> float:
+        return sum(remaining.get(label, 0.0) for label in labels_per_item[idx])
+
+    def choose(idx: int) -> None:
+        val_indices.add(idx)
+        available.discard(idx)
+        for label in labels_per_item[idx]:
+            remaining[label] = max(0.0, remaining[label] - 1.0)
+
+    if val_count >= len(label_counts):
+        for label, _ in sorted(label_counts.items(), key=lambda item: item[1]):
+            if len(val_indices) >= val_count:
+                break
+            candidates = [idx for idx in available if label in labels_per_item[idx]]
+            if not candidates:
+                continue
+            best_score = max(score(idx) for idx in candidates)
+            best_candidates = [idx for idx in candidates if score(idx) == best_score]
+            choose(rng.choice(best_candidates))
+
+    while len(val_indices) < val_count and available:
+        scored = [(score(idx), idx) for idx in available]
+        max_score = max(scored, key=lambda item: item[0])[0]
+        if max_score <= 0:
+            remaining_indices = list(available)
+            rng.shuffle(remaining_indices)
+            for idx in remaining_indices[: val_count - len(val_indices)]:
+                choose(idx)
+            break
+        best_candidates = [idx for sc, idx in scored if sc == max_score]
+        choose(rng.choice(best_candidates))
+
+    val_indices_list = sorted(val_indices)
+    train_items = [items[idx] for idx in range(total) if idx not in val_indices]
+    val_items = [items[idx] for idx in val_indices_list]
     return train_items, val_items
 
 
@@ -151,12 +230,12 @@ def split_train_val(
         _clear_dir(val_labels_dir)
 
     train_tasks = []
-    for image_path, label_path, rel in train_pairs:
+    for image_path, label_path, rel, _ in train_pairs:
         train_tasks.append((image_path, train_images_dir / rel))
         train_tasks.append((label_path, train_labels_dir / rel.with_suffix(".txt")))
 
     val_tasks = []
-    for image_path, label_path, rel in val_pairs:
+    for image_path, label_path, rel, _ in val_pairs:
         val_tasks.append((image_path, val_images_dir / rel))
         val_tasks.append((label_path, val_labels_dir / rel.with_suffix(".txt")))
 

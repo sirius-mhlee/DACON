@@ -50,7 +50,7 @@ def predict(cfg: Config) -> None:
             save_conf=cfg.save_conf,
             verbose=False,
             exist_ok=True,
-            save=False,
+            save=cfg.save_result,
         )
 
         if not results:
