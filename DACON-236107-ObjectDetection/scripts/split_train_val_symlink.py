@@ -38,6 +38,7 @@ def parse_args() -> argparse.Namespace:
 def _collect_images(images_dir: Path) -> List[Path]:
     if not images_dir.exists():
         raise FileNotFoundError(f"Images directory not found: {images_dir}")
+
     return sorted([path for path in images_dir.rglob("*.png")])
 
 
@@ -52,11 +53,13 @@ def _read_labels(label_path: Path) -> Tuple[int, ...]:
         line = raw.strip()
         if not line:
             continue
+
         parts = line.split()
         try:
             cls_id = int(float(parts[0]))
         except (IndexError, ValueError) as exc:
             raise ValueError(f"Invalid label line in {label_path}: {line}") from exc
+
         labels.add(cls_id)
     return tuple(sorted(labels))
 
@@ -66,6 +69,7 @@ def _make_pair(images_dir: Path, labels_dir: Path, image_path: Path) -> Optional
     label_path = labels_dir / rel.with_suffix(".txt")
     if not label_path.exists():
         return None
+
     labels = _read_labels(label_path)
     return (image_path, label_path, rel, labels)
 
@@ -147,9 +151,11 @@ def _split_items(
         for label, _ in sorted(label_counts.items(), key=lambda item: item[1]):
             if len(val_indices) >= val_count:
                 break
+
             candidates = [idx for idx in available if label in labels_per_item[idx]]
             if not candidates:
                 continue
+
             best_score = max(score(idx) for idx in candidates)
             best_candidates = [idx for idx in candidates if score(idx) == best_score]
             choose(rng.choice(best_candidates))
@@ -163,6 +169,7 @@ def _split_items(
             for idx in remaining_indices[: val_count - len(val_indices)]:
                 choose(idx)
             break
+
         best_candidates = [idx for sc, idx in scored if sc == max_score]
         choose(rng.choice(best_candidates))
 
@@ -177,6 +184,7 @@ def _make_symlink(src: Path, dst: Path) -> None:
     if dst.exists() or dst.is_symlink():
         if dst.is_dir():
             raise IsADirectoryError(f"Refuse to overwrite directory: {dst}")
+
         dst.unlink()
     os.symlink(src.resolve(), dst)
 

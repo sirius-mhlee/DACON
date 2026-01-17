@@ -11,6 +11,7 @@ from .config import Config, ROOT_DIR
 def _collect_images(data_folder: Path) -> List[Path]:
     if not data_folder.exists():
         raise FileNotFoundError(f"Data folder not found: {data_folder}")
+
     return sorted([path for path in data_folder.rglob("*.png")])
 
 
