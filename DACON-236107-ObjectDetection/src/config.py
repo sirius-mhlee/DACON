@@ -20,6 +20,7 @@ class Config:
     epochs: int = 100
     imgsz: int = 640
     batch: int = 16
+    optimizer: str = "auto"
 
     predict_model: str = "runs/exp/weights/best.pt"
     predict_project: str = "runs/predict"
