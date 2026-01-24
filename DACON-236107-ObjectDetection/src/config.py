@@ -21,6 +21,7 @@ class Config:
     imgsz: int = 640
     batch: int = 16
     optimizer: str = "auto"
+    lr0: float = 0.01
 
     predict_model: str = "runs/exp/weights/best.pt"
     predict_project: str = "runs/predict"

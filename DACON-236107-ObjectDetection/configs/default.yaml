@@ -10,10 +10,11 @@ data_yaml: datasets/train_val_data.yaml
 epochs: 100
 imgsz: 1024
 batch: 16
-optimizer: AdamW
+optimizer: auto
+lr0: 0.001
 
 # Prediction
-predict_model: runs/train/exp3/weights/best.pt
+predict_model: runs/train/exp4/weights/best.pt
 predict_project: runs/predict
 predict_name: exp
 data_folder: datasets/images/test

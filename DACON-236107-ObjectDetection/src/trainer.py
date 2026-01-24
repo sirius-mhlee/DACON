@@ -11,6 +11,7 @@ def train(cfg: Config) -> None:
         imgsz=cfg.imgsz,
         batch=cfg.batch,
         optimizer=cfg.optimizer,
+        lr0=cfg.lr0,
         device=cfg.device,
         project=ROOT_DIR / cfg.train_project,
         name=cfg.train_name,
