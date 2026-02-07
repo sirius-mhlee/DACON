@@ -52,6 +52,7 @@ def predict(cfg: Config) -> None:
             verbose=False,
             exist_ok=True,
             save=cfg.save_result,
+            show_labels=cfg.show_labels,
         )
 
         if not results:

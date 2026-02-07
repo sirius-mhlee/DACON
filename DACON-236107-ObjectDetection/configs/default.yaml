@@ -25,3 +25,4 @@ iou: 0.7
 save_txt: false
 save_conf: false
 save_result: false
+show_labels: true

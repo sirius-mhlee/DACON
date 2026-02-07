@@ -34,6 +34,7 @@ class Config:
     save_txt: bool = False
     save_conf: bool = False
     save_result: bool = False
+    show_labels: bool = True
 
 
 def _filter_keys(data: Dict[str, Any], schema: Type[Config]) -> Dict[str, Any]:

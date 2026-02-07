@@ -21,7 +21,8 @@ data_folder: datasets/images/test
 sample_csv: datasets/sample_submission.csv
 output_csv: submit.csv
 conf: 0.1
-iou: 0.7
+iou: 0.5
 save_txt: false
 save_conf: false
 save_result: false
+show_labels: false
