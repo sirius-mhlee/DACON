@@ -13,7 +13,7 @@ class Config:
     device: int = 0
     seed: int = 2026
 
-    train_model: str = "models/yolov8n.pt"
+    train_model: str = "models/yolov8n-seg.pt"
     train_project: str = "runs/train"
     train_name: str = "exp"
     data_yaml: str = "datasets/data.yaml"
