@@ -40,7 +40,6 @@ def _convert_one(label_path_str: str, input_dir_str: str, output_dir_str: str) -
     with Image.open(image_path) as img:
         img_w, img_h = img.size
 
-    out_path = output_dir / label_path.name
     new_lines: List[str] = []
     for raw in label_path.read_text(encoding="utf-8").splitlines():
         line = raw.strip()
@@ -52,6 +51,7 @@ def _convert_one(label_path_str: str, input_dir_str: str, output_dir_str: str) -
         xc, yc, w, h = _poly_to_xywh(parts[1:], img_w, img_h)
         new_lines.append(f"{cls_id} {xc:.6f} {yc:.6f} {w:.6f} {h:.6f}")
 
+    out_path = output_dir / label_path.name
     out_path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
 
 
@@ -77,9 +77,11 @@ def convert_labels(input_dir: Path, output_dir: Path, workers: int) -> None:
 
 def main() -> None:
     args = parse_args()
-    input_dir = Path(args.input_dir)
-    output_dir = Path(args.output_dir)
-    convert_labels(input_dir, output_dir, args.workers)
+    convert_labels(
+        input_dir=Path(args.input_dir),
+        output_dir=Path(args.output_dir),
+        workers=args.workers
+    )
 
 
 if __name__ == "__main__":

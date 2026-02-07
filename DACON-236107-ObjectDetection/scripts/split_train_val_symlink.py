@@ -250,10 +250,10 @@ def split_train_val(
     _make_symlinks(train_tasks, workers, "Symlinking (train)")
     _make_symlinks(val_tasks, workers, "Symlinking (val)")
 
-    print(f"train: {len(train_pairs)} files")
-    print(f"val: {len(val_pairs)} files")
+    print(f"Train: {len(train_pairs)} files")
+    print(f"Val: {len(val_pairs)} files")
     if missing_labels:
-        print(f"skipped (missing labels): {missing_labels}")
+        print(f"Skipped (missing labels): {missing_labels}")
 
 
 def main() -> None:

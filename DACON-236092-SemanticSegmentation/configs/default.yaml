@@ -14,7 +14,7 @@ optimizer: auto
 lr0: 0.001
 
 # Prediction
-predict_model: runs/train/exp7/weights/best.pt
+predict_model: runs/train/exp/weights/best.pt
 predict_project: runs/predict
 predict_name: exp
 data_folder: datasets/images/test
