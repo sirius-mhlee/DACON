@@ -3,12 +3,12 @@ device: 0
 seed: 2026
 
 # Training
-train_model: models/yolov8s.pt
+train_model: models/yolov8n-seg.pt
 train_project: runs/train
 train_name: exp
 data_yaml: datasets/train_val_data.yaml
 epochs: 100
-imgsz: 1024
+imgsz: 640
 batch: 8
 optimizer: auto
 lr0: 0.001

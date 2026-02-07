@@ -1,4 +1,5 @@
 import argparse
+import shutil
 import csv
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
@@ -17,14 +18,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", type=str, default="datasets/labels/train", help="Output label directory")
     parser.add_argument("--csv-path", type=str, default="datasets/images/train/train.csv", help="CSV path (img_id, img_path, mask_rle)")
     parser.add_argument("--workers", type=int, default=4, help="Number of worker processes (1=disabled)")
-    parser.add_argument("--class-id", type=int, default=1, help="Class id for all polygons")
+    parser.add_argument("--class-id", type=int, default=0, help="Class id for all polygons")
+    parser.add_argument("--clear", action="store_true", help="Clear existing label folders first")
     return parser.parse_args()
+
+
+def _clear_dir(path: Path) -> None:
+    if path.exists():
+        shutil.rmtree(path)
 
 
 def _decode_rle(mask_rle: str, img_w: int, img_h: int) -> np.ndarray:
     mask = np.zeros(img_w * img_h, dtype=np.uint8)
     if not mask_rle or mask_rle == "-1":
-        return mask.reshape((img_h, img_w), order="F")
+        return mask.reshape((img_h, img_w))
 
     tokens = mask_rle.split()
     if len(tokens) % 2 != 0:
@@ -37,7 +44,7 @@ def _decode_rle(mask_rle: str, img_w: int, img_h: int) -> np.ndarray:
     for start, end in zip(starts, ends):
         mask[start:end] = 1
 
-    return mask.reshape((img_h, img_w), order="F")
+    return mask.reshape((img_h, img_w))
 
 
 def _mask_to_polygons(mask: np.ndarray) -> List[np.ndarray]:
@@ -104,7 +111,7 @@ def _load_rows(csv_path: Path) -> Dict[str, List[str]]:
     return grouped
 
 
-def convert_labels(input_dir: Path, output_dir: Path, csv_path: Path, workers: int, class_id: int) -> None:
+def convert_labels(input_dir: Path, output_dir: Path, csv_path: Path, workers: int, class_id: int, clear: bool) -> None:
     if not csv_path.exists():
         raise FileNotFoundError(f"CSV not found: {csv_path}")
     if not input_dir.exists():
@@ -113,6 +120,9 @@ def convert_labels(input_dir: Path, output_dir: Path, csv_path: Path, workers: i
     grouped = _load_rows(csv_path)
     if not grouped:
         raise ValueError(f"No rows found in csv: {csv_path}")
+    
+    if clear:
+        _clear_dir(output_dir)
 
     output_dir.mkdir(parents=True, exist_ok=True)
     items = sorted(grouped.items())
@@ -156,6 +166,7 @@ def main() -> None:
         csv_path=Path(args.csv_path),
         workers=args.workers,
         class_id=args.class_id,
+        clear=args.clear,
     )
 
 

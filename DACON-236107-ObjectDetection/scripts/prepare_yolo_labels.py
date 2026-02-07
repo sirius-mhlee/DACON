@@ -1,4 +1,5 @@
 import argparse
+import shutil
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 from typing import List, Tuple
@@ -12,7 +13,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--input-dir", type=str, default="datasets/images/train", help="Input directory")
     parser.add_argument("--output-dir", type=str, default="datasets/labels/train", help="Output directory")
     parser.add_argument("--workers", type=int, default=4, help="Number of worker processes (1=disabled)")
+    parser.add_argument("--clear", action="store_true", help="Clear existing label folders first")
     return parser.parse_args()
+
+
+def _clear_dir(path: Path) -> None:
+    if path.exists():
+        shutil.rmtree(path)
 
 
 def _poly_to_xywh(coords: List[float], img_w: int, img_h: int) -> Tuple[float, float, float, float]:
@@ -55,10 +62,13 @@ def _convert_one(label_path_str: str, input_dir_str: str, output_dir_str: str) -
     out_path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
 
 
-def convert_labels(input_dir: Path, output_dir: Path, workers: int) -> None:
+def convert_labels(input_dir: Path, output_dir: Path, workers: int, clear: bool) -> None:
     label_paths = sorted(input_dir.glob("*.txt"))
     if not label_paths:
         raise FileNotFoundError(f"No label files found in {input_dir}")
+    
+    if clear:
+        _clear_dir(output_dir)
 
     output_dir.mkdir(parents=True, exist_ok=True)
     if workers <= 1:
@@ -80,7 +90,8 @@ def main() -> None:
     convert_labels(
         input_dir=Path(args.input_dir),
         output_dir=Path(args.output_dir),
-        workers=args.workers
+        workers=args.workers,
+        clear=args.clear,
     )
 
 
