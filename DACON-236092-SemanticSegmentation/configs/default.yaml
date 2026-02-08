@@ -8,8 +8,8 @@ train_model: models/yolov8n-seg.pt
 train_project: runs/train
 train_name: exp
 data_yaml: datasets/train_val_data.yaml
-epochs: 100
-batch: 16
+epochs: 50
+batch: 64
 optimizer: auto
 lr0: 0.001
 

@@ -9,7 +9,7 @@ def train(cfg: Config) -> None:
         data=cfg.data_yaml,
         epochs=cfg.epochs,
         imgsz=cfg.imgsz,
-        rect=True,
+        rect=False,
         batch=cfg.batch,
         optimizer=cfg.optimizer,
         lr0=cfg.lr0,
