@@ -1,6 +1,6 @@
 path: datasets
-train: images/train
-val: images/train
+train: images/train_tile
+val: images/train_tile
 nc: 1
 names:
   0: house

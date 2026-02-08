@@ -42,6 +42,8 @@ def predict(cfg: Config) -> None:
     for image_path in tqdm(image_paths, total=len(image_paths), desc="Prediction", unit="file"):
         results = model.predict(
             source=str(image_path),
+            imgsz=cfg.imgsz,
+            rect=True,
             conf=cfg.conf,
             iou=cfg.iou,
             device=cfg.device,

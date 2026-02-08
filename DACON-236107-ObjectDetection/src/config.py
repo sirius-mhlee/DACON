@@ -12,13 +12,13 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 class Config:
     device: int = 0
     seed: int = 2026
+    imgsz: int = 640
 
     train_model: str = "models/yolov8n.pt"
     train_project: str = "runs/train"
     train_name: str = "exp"
     data_yaml: str = "datasets/data.yaml"
     epochs: int = 100
-    imgsz: int = 640
     batch: int = 16
     optimizer: str = "auto"
     lr0: float = 0.01

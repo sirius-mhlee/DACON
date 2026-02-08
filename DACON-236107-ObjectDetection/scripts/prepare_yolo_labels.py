@@ -9,7 +9,7 @@ from tqdm.auto import tqdm
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Convert LabelMe bbox to YOLO bbox.")
+    parser = argparse.ArgumentParser(description="Convert LabelMe bbox to YOLO bbox")
     parser.add_argument("--input-dir", type=str, default="datasets/images/train", help="Input directory")
     parser.add_argument("--output-dir", type=str, default="datasets/labels/train", help="Output directory")
     parser.add_argument("--workers", type=int, default=4, help="Number of worker processes (1=disabled)")

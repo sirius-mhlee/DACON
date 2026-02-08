@@ -13,7 +13,7 @@ import numpy as np
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Convert RLE mask to YOLO polygon.")
+    parser = argparse.ArgumentParser(description="Convert RLE mask to YOLO polygon")
     parser.add_argument("--input-dir", type=str, default="datasets/images/train", help="Input image directory")
     parser.add_argument("--output-dir", type=str, default="datasets/labels/train", help="Output label directory")
     parser.add_argument("--csv-path", type=str, default="datasets/images/train/train.csv", help="CSV path (img_id, img_path, mask_rle)")

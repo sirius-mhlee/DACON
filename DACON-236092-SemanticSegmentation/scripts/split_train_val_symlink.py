@@ -21,7 +21,7 @@ LabeledPair = Tuple[Path, Path, Path, Tuple[int, ...]]
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Split train/val with symlinks.")
+    parser = argparse.ArgumentParser(description="Split train/val with symlinks")
     parser.add_argument("--config", type=str, default="configs/default.yaml", help="Config yaml for defaults")
     parser.add_argument("--images-dir", type=str, default="datasets/images/train", help="Source images directory")
     parser.add_argument("--labels-dir", type=str, default="datasets/labels/train", help="Source labels directory")
@@ -29,6 +29,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--train-name", type=str, default="train_split", help="Output train split name")
     parser.add_argument("--val-name", type=str, default="val_split", help="Output val split name")
     parser.add_argument("--val-ratio", type=float, default=0.2, help="Fraction for validation split")
+    parser.add_argument("--split-mode", type=str, choices=["random", "satisfied"], default="satisfied", help="Split strategy")
     parser.add_argument("--seed", type=int, default=None, help="Random seed for shuffling (overrides config)")
     parser.add_argument("--workers", type=int, default=4, help="Number of worker threads (1=disabled)")
     parser.add_argument("--clear", action="store_true", help="Clear existing split folders first")
@@ -54,10 +55,10 @@ def _read_labels(label_path: Path) -> Tuple[int, ...]:
         if not line:
             continue
 
-        parts = line.split()
+        parts = line.split(maxsplit=1)[0]
         try:
-            cls_id = int(float(parts[0]))
-        except (IndexError, ValueError) as exc:
+            cls_id = int(float(parts))
+        except ValueError as exc:
             raise ValueError(f"Invalid label line in {label_path}: {line}") from exc
 
         labels.add(cls_id)
@@ -105,6 +106,7 @@ def _split_items(
     items: List[LabeledPair],
     val_ratio: float,
     seed: int,
+    split_mode: str,
 ) -> Tuple[List[LabeledPair], List[LabeledPair]]:
     if val_ratio <= 0:
         return items, []
@@ -116,6 +118,15 @@ def _split_items(
         val_count = 1
     if val_count > total:
         val_count = total
+
+    if split_mode == "random":
+        indices = list(range(total))
+        rng.shuffle(indices)
+        val_indices = indices[:val_count]
+        train_indices = indices[val_count:]
+        train_items = [items[i] for i in train_indices]
+        val_items = [items[i] for i in val_indices]
+        return train_items, val_items
 
     labels_per_item = [set(pair[3]) for pair in items]
     label_counts: Dict[int, int] = {}
@@ -211,6 +222,7 @@ def split_train_val(
     train_name: str,
     val_name: str,
     val_ratio: float,
+    split_mode: str,
     seed: int,
     workers: int,
     clear: bool,
@@ -224,7 +236,8 @@ def split_train_val(
     if not paired:
         raise FileNotFoundError(f"No matching labels found in {labels_dir}")
 
-    train_pairs, val_pairs = _split_items(paired, val_ratio, seed)
+    train_pairs, val_pairs = _split_items(paired, val_ratio, seed, split_mode)
+    print("Split completed")
 
     train_images_dir = output_root / "images" / train_name
     val_images_dir = output_root / "images" / val_name
@@ -267,6 +280,7 @@ def main() -> None:
         train_name=args.train_name,
         val_name=args.val_name,
         val_ratio=args.val_ratio,
+        split_mode=args.split_mode,
         seed=seed,
         workers=args.workers,
         clear=args.clear,

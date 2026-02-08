@@ -20,6 +20,7 @@ pip install pandas
 
 ```shell
 python scripts/prepare_yolo_labels.py
+python scripts/tile_yolo_seg_dataset.py
 python scripts/split_train_val_symlink.py
 ```
 

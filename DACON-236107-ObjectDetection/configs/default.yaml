@@ -1,6 +1,7 @@
 # Common
 device: 0
 seed: 2026
+imgsz: 1024
 
 # Training
 train_model: models/yolov8s.pt
@@ -8,7 +9,6 @@ train_project: runs/train
 train_name: exp
 data_yaml: datasets/train_val_data.yaml
 epochs: 100
-imgsz: 1024
 batch: 8
 optimizer: auto
 lr0: 0.001
